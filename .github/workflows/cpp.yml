@@ -15,15 +15,36 @@ jobs:
     - uses: DoozyX/clang-format-lint-action@v0.14
       with:
         source: '.'
-        extensions: 'h,hpp,cpp'
+        extensions: 'h,hpp,cxx,cpp'
         clangFormatVersion: 14
 
-  oneapi-run-tests:
+  run-tests-oneapi:
     runs-on: ubuntu-latest
     container: intel/oneapi-basekit:2023.1.0-devel-ubuntu22.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CMAKE_BUILD_PARALLEL_LEVEL: 8
+    steps:
+    - uses: actions/checkout@v3
+    - name: setup compiler env
+      run: |
+        which icpx
+        echo "CXX=$(which icpx)" >> $GITHUB_ENV
+    - name: env check
+      run: |
+        env | grep CXX
+    - name: cmake
+      run: cmake -S . -B build-icpx
+    - name: build
+      run: cmake --build build-icpx -v
+    - name: run tests
+      run: cmake --build build-icpx -v -t test
+
+  run-tests:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        cxx: [ 'clang++', 'g++', 'icpx' ]
+        cxx: [ 'clang++', 'g++' ]
     env:
       DEBIAN_FRONTEND: noninteractive
       CMAKE_BUILD_PARALLEL_LEVEL: 8
