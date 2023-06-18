@@ -1,0 +1,44 @@
+name: C++ Tests
+
+on:
+  push:
+    branches: [ main, 'pr/*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: DoozyX/clang-format-lint-action@v0.14
+      with:
+        source: '.'
+        extensions: 'h,hpp,cpp'
+        clangFormatVersion: 14
+
+  oneapi-run-tests:
+    runs-on: ubuntu-latest
+    container: intel/oneapi-basekit:2023.1.0-devel-ubuntu22.04
+    strategy:
+      matrix:
+        cxx: [ 'clang++', 'g++', 'icpx' ]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CMAKE_BUILD_PARALLEL_LEVEL: 8
+    steps:
+    - uses: actions/checkout@v3
+    - name: setup compiler env
+      run: |
+        which ${{ matrix.cxx }}
+        echo "CXX=$(which ${{ matrix.cxx }})" >> $GITHUB_ENV
+    - name: env check
+      run: |
+        env | grep CXX
+    - name: cmake
+      run: cmake -S . -B build-${{ matrix.cxx }}
+    - name: build
+      run: cmake --build build-${{ matrix.cxx }} -v
+    - name: run tests
+      run: cmake --build build-${{ matrix.cxx }} -v -t test

@@ -1,0 +1,4 @@
+add_executable(test_std_complex_exp)
+target_sources(test_std_complex_exp PRIVATE test_std_complex_exp.cxx)
+target_link_libraries(test_std_complex_exp gtest_main)
+gtest_discover_tests(test_std_complex_exp)
